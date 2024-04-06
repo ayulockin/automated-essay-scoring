@@ -1,6 +1,7 @@
 import logging
 logging.basicConfig(level=logging.INFO)
 
+import gc
 import wandb
 import numpy as np
 import pandas as pd
@@ -11,7 +12,7 @@ import torch
 logging.debug(torch.__version__)
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
-df = pd.read_csv("data/train.csv")
+df = pd.read_csv("data/valid_df.csv")
 logging.info(f"Total essays: {len(df)}")
 
 # Configs
@@ -79,14 +80,17 @@ for idx, row in tqdm(df.iterrows(), total=len(df)):
         return_tensors="pt",
         return_attention_mask=False
     ).to("cuda")
-    with torch.backends.cuda.sdp_kernel(enable_flash=True, enable_math=False, enable_mem_efficient=False):
-        outputs = model.generate(
-            inputs,
-            max_new_tokens=20,
-            do_sample=False,
-            pad_token_id=tokenizer.eos_token_id
-        )
+    with torch.no_grad():
+        with torch.backends.cuda.sdp_kernel(enable_flash=True, enable_math=False, enable_mem_efficient=False):
+            outputs = model.generate(
+                inputs,
+                max_new_tokens=20,
+                do_sample=False,
+                pad_token_id=tokenizer.eos_token_id
+            ).to("cpu")
     outputs = tokenizer.decode(outputs[0])
+    torch.cuda.empty_cache()
+    gc.collect()
     # try to parse the score
     try:
         score_dict = eval(outputs.split("<|assistant|>")[-1].split("</s>")[0].strip("\n"))
