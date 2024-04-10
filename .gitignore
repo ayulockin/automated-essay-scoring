@@ -5,3 +5,4 @@ wandb
 *.ipynb_checkpoints
 
 artifacts/
+clf/
