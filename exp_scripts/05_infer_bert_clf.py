@@ -12,10 +12,11 @@ from sklearn.metrics import cohen_kappa_score
 
 from transformers import AutoTokenizer
 from transformers import DistilBertConfig, DistilBertForSequenceClassification
+from transformers import DebertaV2Config, DebertaV2ForSequenceClassification
 
 df = pd.read_csv("data/valid_df.csv")
 
-model_name = "clf/checkpoint-868"
+model_name = "clf/checkpoint-2598"
 
 run = wandb.init(
     project="score_essay",
@@ -40,8 +41,8 @@ def rescale_score(score, min_possible_score, max_possible_score):
     return (score - min_possible_score) / (max_possible_score - min_possible_score)
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-config = DistilBertConfig.from_pretrained(model_name)
-model = DistilBertForSequenceClassification(config=config).from_pretrained(model_name, num_labels=6).to("cuda")
+config = DebertaV2Config.from_pretrained(model_name)
+model = DebertaV2ForSequenceClassification(config=config).from_pretrained(model_name, num_labels=6).to("cuda")
 
 scores = []
 
